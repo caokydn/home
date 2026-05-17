@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CaoKy Game Hub</title>
+
+<style>
+
+body{
+    margin:0;
+    padding:12px;
+    background:#eef2f7;
+    font-family:Arial, sans-serif;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:15px;
+    font-size:26px;
+}
+
+/* ===== LEVEL 1 ===== */
+
+.level1-block{
+    background:#dbeafe;
+    border-radius:10px;
+    padding:10px;
+    margin-bottom:15px;
+}
+
+.group-title{
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:10px;
+    color:#1e3a8a;
+}
+
+/* ===== LEVEL 2 ===== */
+
+.level2-container{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.subgroup{
+    background:#ffffff;
+    border-radius:8px;
+    padding:8px;
+    min-width:160px;
+    max-width:220px;
+    flex:1 1 180px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* ===== TITLE LEVEL 2 ===== */
+
+.subgroup-title{
+    font-size:13px;
+    font-weight:bold;
+    margin-bottom:6px;
+    color:#111827;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+/* ===== LEVEL 3 ===== */
+
+.exercise-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+}
+
+.exercise-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    width:28px;
+    height:28px;
+
+    background:#4CAF50;
+    color:white;
+    text-decoration:none;
+
+    border-radius:6px;
+
+    font-size:12px;
+    font-weight:bold;
+
+    transition:0.15s;
+}
+
+.exercise-btn:hover{
+    background:#43a047;
+    transform:scale(1.08);
+}
+
+.loading{
+    text-align:center;
+    font-size:18px;
+    margin-top:40px;
+}
+
+.repo-count{
+    text-align:center;
+    margin-bottom:15px;
+    color:#555;
+    font-size:14px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🎮 CaoKy Game Hub</h1>
+
+<div class="repo-count" id="repoCount"></div>
+
+<div id="content" class="loading">
+Loading games...
+</div>
+
+<script>
+
+const USERNAME = "caokydn";
+
+async function fetchAllRepos(){
+
+    let allRepos = [];
+
+    for(let page = 1; page <= 20; page++){
+
+        try{
+
+            const response = await fetch(
+                `https://api.github.com/users/${USERNAME}/repos?per_page=100&page=${page}`
+            );
+
+            // lỗi github
+            if(!response.ok){
+
+                console.log(
+                    "GitHub Error:",
+                    response.status
+                );
+
+                break;
+            }
+
+            const repos =
+                await response.json();
+
+            // data lỗi
+            if(!Array.isArray(repos)){
+
+                console.log(
+                    "Invalid Data"
+                );
+
+                break;
+            }
+
+            // hết repo
+            if(repos.length === 0){
+                break;
+            }
+
+            allRepos =
+                allRepos.concat(repos);
+
+        }
+        catch(error){
+
+            console.log(error);
+
+            break;
+        }
+    }
+
+    return allRepos;
+}
+
+async function loadRepos(){
+
+    const container = document.getElementById("content");
+
+    try{
+
+        const repos = await fetchAllRepos();
+
+        container.innerHTML = "";
+
+	const validRepos = repos.filter(repo =>
+
+	    repo &&
+	    repo.name &&
+	    !repo.private &&
+	    repo.name.toLowerCase() !==
+	    `${USERNAME}.github.io`
+
+	);
+
+        document.getElementById("repoCount").innerHTML =
+            `Total Games: ${validRepos.length}`;
+
+        const level1Groups = {};
+
+        validRepos.forEach(repo => {
+
+            const repoName = repo.name;
+
+            const level1 =
+                repoName.substring(0,3).toUpperCase();
+
+            const level2 =
+                repoName.slice(0,-1);
+
+            const lastChar =
+                repoName.slice(-1);
+
+            if(!level1Groups[level1]){
+                level1Groups[level1] = {};
+            }
+
+            if(!level1Groups[level1][level2]){
+                level1Groups[level1][level2] = [];
+            }
+
+            level1Groups[level1][level2].push({
+                repo: repoName,
+                lastChar: lastChar
+            });
+
+        });
+
+        const sortedLevel1 =
+            Object.keys(level1Groups).sort();
+
+        sortedLevel1.forEach(level1 => {
+
+            // ===== LEVEL 1 BLOCK =====
+
+            const level1Block =
+                document.createElement("div");
+
+            level1Block.className =
+                "level1-block";
+
+            const title =
+                document.createElement("div");
+
+            title.className =
+                "group-title";
+
+            title.innerHTML =
+                `${level1}`;
+
+            level1Block.appendChild(title);
+
+            // ===== LEVEL 2 CONTAINER =====
+
+            const level2Container =
+                document.createElement("div");
+
+            level2Container.className =
+                "level2-container";
+
+            const level2Groups =
+                level1Groups[level1];
+
+            const sortedLevel2 =
+                Object.keys(level2Groups).sort();
+
+            sortedLevel2.forEach(level2 => {
+
+                const subgroup =
+                    document.createElement("div");
+
+                subgroup.className =
+                    "subgroup";
+
+                const subgroupTitle =
+                    document.createElement("div");
+
+                subgroupTitle.className =
+                    "subgroup-title";
+
+                subgroupTitle.innerHTML =
+                    level2;
+
+                subgroup.appendChild(subgroupTitle);
+
+                const buttonContainer =
+                    document.createElement("div");
+
+                buttonContainer.className =
+                    "exercise-buttons";
+
+                level2Groups[level2]
+                .sort((a,b)=>
+                    a.lastChar.localeCompare(b.lastChar)
+                )
+                .forEach(item => {
+
+                    const gameUrl =
+                        `https://${USERNAME}.github.io/${item.repo}/`;
+
+                    const btn =
+                        document.createElement("a");
+
+                    btn.className =
+                        "exercise-btn";
+
+                    btn.href =
+                        gameUrl;
+
+                    btn.target =
+                        "_blank";
+
+                    btn.innerHTML =
+                        item.lastChar;
+
+                    buttonContainer.appendChild(btn);
+
+                });
+
+                subgroup.appendChild(buttonContainer);
+
+                level2Container.appendChild(subgroup);
+
+            });
+
+            level1Block.appendChild(level2Container);
+
+            container.appendChild(level1Block);
+
+        });
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        container.innerHTML = `
+            <div style="color:red;text-align:center;">
+                Error loading repos.
+            </div>
+        `;
+    }
+}
+
+loadRepos();
+
+</script>
+
+</body>
+</html>
