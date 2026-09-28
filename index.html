@@ -133,58 +133,70 @@ const USERNAME = "caokydn";
 
 async function fetchAllRepos(){
 
-    let allRepos = [];
+    try{
 
-    for(let page = 1; page <= 20; page++){
+        const response =
+            await fetch("games.json");
 
-        try{
+        if(!response.ok){
 
-            const response = await fetch(
-                `https://api.github.com/users/${USERNAME}/repos?per_page=100&page=${page}`
+            console.log(
+                "games.json Error:",
+                response.status
             );
 
-            // lỗi github
-            if(!response.ok){
-
-                console.log(
-                    "GitHub Error:",
-                    response.status
-                );
-
-                break;
-            }
-
-            const repos =
-                await response.json();
-
-            // data lỗi
-            if(!Array.isArray(repos)){
-
-                console.log(
-                    "Invalid Data"
-                );
-
-                break;
-            }
-
-            // hết repo
-            if(repos.length === 0){
-                break;
-            }
-
-            allRepos =
-                allRepos.concat(repos);
+            return [];
 
         }
-        catch(error){
 
-            console.log(error);
+        const games =
+            await response.json();
 
-            break;
+        if(!games ||
+           typeof games !== "object" ||
+           Array.isArray(games)){
+
+            console.log(
+                "Invalid games.json"
+            );
+
+            return [];
+
         }
+
+        /*
+        games.json có dạng:
+
+        {
+            "abc1": {
+                "vocab": [...]
+            },
+
+            "abc2": {
+                "vocab": [...]
+            }
+        }
+
+        Chỉ lấy tên repository
+        */
+
+        return Object.keys(games).map(repoName => {
+
+            return {
+                name: repoName,
+                private: false
+            };
+
+        });
+
     }
+    catch(error){
 
-    return allRepos;
+        console.log(error);
+
+        return [];
+
+    }
 }
 
 async function loadRepos(){
@@ -350,7 +362,7 @@ async function loadRepos(){
 
         container.innerHTML = `
             <div style="color:red;text-align:center;">
-                Error loading repos.
+                Error loading games.json.
             </div>
         `;
     }
